@@ -3,10 +3,27 @@ package main
 import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 )
+
+const (
+	dbDriver = "mysql"
+	dbUser   = "root"
+	dbPass   = "root"
+	dbName   = "todolist"
+)
+
+var db, _ = gorm.Open(dbDriver, dbUser+":"+dbPass+"@/"+dbName+"?charset=utf8&parseTime=True&loc=Local")
+
+type TodoItemModel struct {
+	Id          int `gorm:"primary key"`
+	Description string
+	Completed   bool
+}
 
 func CreateItem(w http.ResponseWriter, r *http.Request) {
 
@@ -24,6 +41,9 @@ func init() {
 }
 
 func main() {
+	defer db.Close()
+	db.Debug().DropTableIfExists(&TodoItemModel{})
+	db.Debug().AutoMigrate(&TodoItemModel{})
 	log.Info("Starting API server.")
 	router := mux.NewRouter()
 
